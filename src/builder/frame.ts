@@ -4,38 +4,24 @@ import { trace } from "./tracer";
 
 export function buildFrame(context: BuildContext, frame: FrameModifier) {
   trace("#buildFrame", context, frame);
-  const maximumFrameArguments: string[] = [];
-  if (frame.maxWidth != null || frame.maxHeight != null) {
-    if (frame.maxWidth != null) {
-      maximumFrameArguments.push(`maxWidth: .infinity`);
+
+  const addFrameArguments = (properties, type) => {
+    const argumentsArray = properties.map(property => {
+      if (frame[property] != null) {
+        return `${property}: ${type == 'max' ? '.infinity' : frame[property]}`;
+      }
+    }).filter(Boolean);
+
+    if (frame.alignment !== 'center' && argumentsArray.length > 0) {
+      argumentsArray.push(`alignment: .${frame.alignment}`);
     }
-    if (frame.maxHeight != null) {
-      maximumFrameArguments.push(`maxHeight: .infinity`);
-    }
-  }
-  const fixedFrameArguments: string[] = [];
-  if (frame.width != null || frame.height != null) {
-    if (frame.width != null) {
-      fixedFrameArguments.push(`width: ${frame.width}`);
-    }
-    if (frame.height != null) {
-      fixedFrameArguments.push(`height: ${frame.height}`);
-    }
-  }
-  if (frame.alignment != "center") {
-    if (maximumFrameArguments.length > 0) {
-      maximumFrameArguments.push(`alignment: .${frame.alignment}`);
-    } else if (fixedFrameArguments.length > 0) {
-      fixedFrameArguments.push(`alignment: .${frame.alignment}`);
+
+    if (argumentsArray.length > 0) {
+      const argumentStr = argumentsArray.join(", ");
+      context.add(`.frame(${argumentStr})`);
     }
   }
 
-  if (maximumFrameArguments.length > 0) {
-    const maximumFrameArgument = maximumFrameArguments.join(", ");
-    context.add(`.frame(${maximumFrameArgument})`);
-  }
-  if (fixedFrameArguments.length > 0) {
-    const fixedFrameArgument = fixedFrameArguments.join(", ");
-    context.add(`.frame(${fixedFrameArgument})`);
-  }
+  addFrameArguments(['maxWidth', 'maxHeight'], 'max');
+  addFrameArguments(['width', 'height'], 'fixed');
 }
